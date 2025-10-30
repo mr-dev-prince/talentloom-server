@@ -1,0 +1,23 @@
+{
+  "name": "talentloom",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Talentloom hackathon task",
+  "license": "ISC",
+  "author": "Prince Chaurasia",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon index.js",
+    "build": "npm i && npm build"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.19.2"
+  },
+  "proxy": "http://localhost:5173"
+}

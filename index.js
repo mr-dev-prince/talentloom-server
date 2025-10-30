@@ -16,10 +16,10 @@ app.use(express.json());
 app.use("/auth", userRouter);
 app.use("/discussion", discussionRouter);
 app.use("/comment", commentRouter);
-app.use("/upvote", upvoteRouter)
+app.use("/upvote", upvoteRouter);
 
 app.get("/", (req, res) => res.send("Talentloom hackathon server"));
 
-app.listen(process.env.PORT || 4000, () =>
+app.listen(process.env.PORT || 8000, () =>
   console.log(`Server running at ${process.env.PORT}`)
 );

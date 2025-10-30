@@ -1,11 +1,11 @@
+import { Comment } from "../model/comment.model.js";
 import { Discussion } from "../model/discussion.model.js";
 import { Upvote } from "../model/upvote.model.js";
 
-// CREATE DISCUSSION
 export const createDiscussion = async (req, res) => {
   try {
     const { title, content, public: isPublic } = req.body;
-    const userId = req.user?.id; // assuming JWT middleware sets req.user
+    const userId = req.user?.id; 
 
     if (!userId || !title || !content) {
       return res.status(400).json({ message: "Missing required fields." });
@@ -28,7 +28,6 @@ export const createDiscussion = async (req, res) => {
   }
 };
 
-// GET SINGLE DISCUSSION BY ID
 export const getDiscussion = async (req, res) => {
   try {
     const { id } = req.params;
@@ -37,7 +36,7 @@ export const getDiscussion = async (req, res) => {
       "userId",
       "name email"
     );
-    
+
     if (!discussion)
       return res.status(404).json({ message: "Discussion not found." });
 
@@ -50,17 +49,16 @@ export const getDiscussion = async (req, res) => {
   }
 };
 
-// GET ALL DISCUSSIONS (with sorting)
 export const getAllDiscussions = async (req, res) => {
   try {
-    const { sortBy } = req.query; // sortBy = 'upvotes' | 'newest' | 'oldest'
+    const { sortBy } = req.query; 
 
     let discussions = await Discussion.find()
       .populate("userId", "name email")
       .lean();
 
-    // Attach upvote count for each discussion
     const discussionIds = discussions.map((d) => d._id);
+
     const upvoteCounts = await Upvote.aggregate([
       { $match: { discussionId: { $in: discussionIds } } },
       { $group: { _id: "$discussionId", count: { $sum: 1 } } },
@@ -71,29 +69,40 @@ export const getAllDiscussions = async (req, res) => {
       return acc;
     }, {});
 
+    const comments = await Comment.find({
+      discussionId: { $in: discussionIds },
+    })
+      .populate("userId", "name email")
+      .lean();
+
+    const commentsMap = comments.reduce((acc, c) => {
+      const key = c.discussionId.toString();
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(c);
+      return acc;
+    }, {});
+
     discussions = discussions.map((d) => ({
       ...d,
       upvotes: upvoteMap[d._id.toString()] || 0,
+      comments: commentsMap[d._id.toString()] || [],
     }));
 
-    // Sort discussions
     if (sortBy === "upvotes") {
       discussions.sort((a, b) => b.upvotes - a.upvotes);
     } else if (sortBy === "oldest") {
       discussions.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     } else {
-      // Default: newest first
       discussions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
     res.status(200).json(discussions);
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching discussions:", error);
     res.status(500).json({ message: "Failed to get discussions." });
   }
 };
 
-// DELETE DISCUSSION
 export const deleteDiscussion = async (req, res) => {
   try {
     const { id } = req.params;
